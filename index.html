@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MML 08 &mdash; When Models Meet Data</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]})"></script>
+    <style>
+        :root { --bg-primary:#0a0a0a; --bg-card:#0d1117; --bg-code:#161b22; --text-primary:#e6edf3; --text-secondary:#8b949e; --accent:#a78bfa; --accent-dim:#a78bfa44; --accent-glow:#a78bfa33; --accent-2:#f472b6; --accent-3:#fbbf24; --accent-4:#34d399; --border:#21262d; --font-display:'Space Grotesk',sans-serif; --font-mono:'JetBrains Mono','Fira Code',monospace; --font-body:'Inter',sans-serif; --max-width:900px; }
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        html{scroll-behavior:smooth}
+        body{background:var(--bg-primary);color:var(--text-primary);font-family:var(--font-body);font-size:17px;line-height:1.7;overflow-x:hidden}
+        .hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:2rem 1.5rem;text-align:center;position:relative}
+        .hero::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:700px;height:600px;background:radial-gradient(circle,var(--accent-glow) 0%,transparent 70%);pointer-events:none;z-index:0}
+        .hero>*{position:relative;z-index:1}
+        .series-label{font-family:var(--font-mono);font-size:.85rem;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:1rem}
+        .hero h1{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);font-weight:700;color:var(--text-primary);line-height:1.2;margin-bottom:1rem}
+        .hero h1 .accent{color:var(--accent)}
+        .hero .subtitle{font-size:1.1rem;color:var(--text-secondary);max-width:640px;margin-bottom:2rem}
+        .tags{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin-bottom:2.5rem}
+        .tag{font-family:var(--font-mono);font-size:.75rem;padding:.25rem .75rem;border-radius:999px;border:1px solid var(--accent);color:var(--accent);background:var(--accent-dim);white-space:nowrap}
+        .slide{min-height:100vh;max-width:var(--max-width);margin:0 auto;padding:4rem 1.5rem;position:relative;display:flex;flex-direction:column;justify-content:center}
+        .slide-number{font-family:var(--font-display);font-size:5rem;font-weight:700;color:var(--accent-dim);position:absolute;top:2rem;right:1.5rem;line-height:1;user-select:none}
+        .slide h2{font-family:var(--font-display);font-size:1.9rem;font-weight:700;color:var(--accent);margin-bottom:1.5rem;line-height:1.25}
+        .slide h3{font-family:var(--font-display);font-size:1.3rem;font-weight:600;color:var(--text-primary);margin-top:1.5rem;margin-bottom:.75rem}
+        .slide p{margin-bottom:1rem;color:var(--text-secondary)}
+        .slide p strong{color:var(--text-primary)}
+        .slide ul,.slide ol{margin-bottom:1rem;padding-left:1.5rem;color:var(--text-secondary)}
+        .slide li{margin-bottom:.4rem}
+        .slide li strong{color:var(--text-primary)}
+        .slide code{background:var(--bg-code);padding:.1rem .35rem;border-radius:3px;font-family:var(--font-mono);font-size:.85em;color:var(--accent)}
+        .diagram-grid{display:grid;gap:.75rem;margin:1.5rem 0;padding:1.5rem;background:var(--bg-card);border:1px solid var(--border);border-radius:8px}
+        .diagram-grid.cols-2{grid-template-columns:1fr 1fr}
+        .diagram-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+        .diagram-panel{padding:1rem;background:var(--bg-code);border:1px solid var(--border);border-radius:6px}
+        .diagram-panel.accent-border{border-left:3px solid var(--accent)}
+        .diagram-panel.r{border-left:3px solid var(--accent-2)}
+        .diagram-panel.y{border-left:3px solid var(--accent-3)}
+        .diagram-panel.g{border-left:3px solid var(--accent-4)}
+        .diagram-panel h4{font-family:var(--font-display);font-size:1rem;color:var(--accent);margin-bottom:.5rem}
+        .diagram-panel.r h4{color:var(--accent-2)}
+        .diagram-panel.y h4{color:var(--accent-3)}
+        .diagram-panel.g h4{color:var(--accent-4)}
+        .diagram-panel p,.diagram-panel ul{font-size:.9rem}
+        .callout{background:var(--bg-card);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:1rem 1.25rem;margin:1.25rem 0}
+        .callout p{margin-bottom:0}
+        .callout .callout-label{font-family:var(--font-mono);font-size:.75rem;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.3rem}
+        .canvas-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:1rem;margin:1.25rem 0;overflow-x:auto}
+        .canvas-wrap canvas{display:block;margin:0 auto;max-width:100%}
+        .control-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin:1.25rem 0}
+        .control-row{display:flex;flex-wrap:wrap;align-items:center;gap:.75rem;margin-bottom:.75rem}
+        .control-row label{font-family:var(--font-mono);font-size:.8rem;color:var(--text-secondary);min-width:130px}
+        .control-row input[type="range"]{flex:1;min-width:150px;accent-color:var(--accent)}
+        .control-row .val{font-family:var(--font-mono);font-size:.85rem;color:var(--accent);min-width:80px;text-align:right}
+        .control-row select{background:var(--bg-code);border:1px solid var(--border);color:var(--text-primary);border-radius:4px;padding:.3rem .5rem;font-family:var(--font-mono);font-size:.8rem}
+        .btn{font-family:var(--font-mono);font-size:.8rem;padding:.4rem .9rem;background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent);border-radius:4px;cursor:pointer}
+        .btn:hover{background:rgba(167,139,250,.25)}
+        .btn.secondary{background:var(--bg-code);color:var(--text-secondary);border-color:var(--border)}
+        .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.5rem;margin-top:.75rem}
+        .metric{background:var(--bg-code);border:1px solid var(--border);border-radius:6px;padding:.6rem .8rem;text-align:center}
+        .metric .metric-label{font-family:var(--font-mono);font-size:.7rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.08em}
+        .metric .metric-value{font-family:var(--font-display);font-size:1.25rem;color:var(--accent);font-weight:600;margin-top:.2rem}
+        .contents-list{list-style:none;padding-left:0;counter-reset:contents}
+        .contents-list li{counter-increment:contents;padding:.6rem 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:1rem}
+        .contents-list li:last-child{border-bottom:none}
+        .contents-list li::before{content:counter(contents,decimal-leading-zero);font-family:var(--font-mono);font-size:.85rem;color:var(--accent);min-width:2rem}
+        .contents-list a{color:var(--text-primary);text-decoration:none}
+        .contents-list a:hover{color:var(--accent)}
+        .footer{text-align:center;padding:3rem 1.5rem;color:var(--text-secondary);font-size:.85rem;border-top:1px solid var(--border);max-width:var(--max-width);margin:0 auto}
+        .footer a{color:var(--accent);text-decoration:none}
+        .katex{color:var(--text-primary)}
+        .katex-display{margin:1rem 0;overflow-x:auto;overflow-y:hidden}
+        table{width:100%;border-collapse:collapse;font-size:.9rem;margin:1rem 0}
+        th{background:var(--bg-code);color:var(--accent);font-weight:600;text-align:left;padding:.6rem .85rem;border-bottom:1px solid var(--border);font-family:var(--font-display)}
+        td{padding:.5rem .85rem;border-bottom:1px solid var(--border);color:var(--text-secondary);vertical-align:top}
+        tr:last-child td{border-bottom:none}
+        tr:nth-child(even) td{background:rgba(13,17,23,.5)}
+        @media (max-width:640px){.slide{padding:3rem 1rem;min-height:auto}.slide-number{font-size:3rem;top:1.5rem;right:1rem}.slide h2{font-size:1.5rem}.diagram-grid.cols-2,.diagram-grid.cols-3{grid-template-columns:1fr}.hero h1{font-size:1.8rem}}
+    </style>
+</head>
+<body>
+
+<header class="hero">
+    <div class="series-label">Mathematics for Machine Learning &mdash; Deck 08</div>
+    <h1>When Models <span class="accent">Meet Data</span></h1>
+    <p class="subtitle">Empirical risk, the bias-variance trade-off, regularisation, cross-validation, and the MLE / MAP split &mdash; the language of generalisation.</p>
+
+    <div class="tags">
+        <span class="tag">ERM</span><span class="tag">bias-variance</span>
+        <span class="tag">regularisation</span><span class="tag">cross-val</span>
+        <span class="tag">MLE</span><span class="tag">MAP</span><span class="tag">graphical models</span>
+    </div>
+</header>
+
+<section class="slide" id="slide-00">
+    <div class="slide-number">00</div>
+    <h2>Topics We'll Cover</h2>
+    <ul class="contents-list">
+        <li><a href="#slide-01">Data, model, predictor &mdash; the contract</a></li>
+        <li><a href="#slide-02">Empirical risk minimisation</a></li>
+        <li><a href="#slide-03">The bias-variance decomposition</a></li>
+        <li><a href="#slide-04">Interactive: polynomial fitting</a></li>
+        <li><a href="#slide-05">Regularisation as a prior</a></li>
+        <li><a href="#slide-06">Cross-validation</a></li>
+        <li><a href="#slide-07">MLE vs MAP</a></li>
+        <li><a href="#slide-08">Probabilistic modelling &amp; the gen/disc split</a></li>
+        <li><a href="#slide-09">Directed graphical models</a></li>
+        <li><a href="#slide-10">Model selection</a></li>
+        <li><a href="#slide-11">Where this lands in Part II</a></li>
+        <li><a href="#slide-12">Cheat sheet</a></li>
+    </ul>
+</section>
+
+<section class="slide" id="slide-01">
+    <div class="slide-number">01</div>
+    <h2>Data, Model, Predictor &mdash; the Contract</h2>
+    <p>The setup, used unchanged by every Part II chapter:</p>
+    <ul>
+        <li><strong>Data</strong>: an i.i.d. sample $\{(\mathbf{x}_n, y_n)\}_{n=1}^N$ from an unknown joint $p(\mathbf{x}, y)$.</li>
+        <li><strong>Hypothesis class</strong>: a set of candidate predictors $\mathcal{H} = \{f_{\boldsymbol\theta} : \boldsymbol\theta\in\Theta\}$.</li>
+        <li><strong>Loss</strong>: $\ell:\mathcal Y\times\mathcal Y\to\mathbb{R}_{\ge 0}$ scoring a prediction against ground truth.</li>
+        <li><strong>Goal</strong>: find $\boldsymbol\theta$ minimising the <em>expected risk</em></li>
+    </ul>
+    <p>$$R(\boldsymbol\theta) = \mathbb{E}_{(\mathbf{x},y)\sim p}[\ell(f_{\boldsymbol\theta}(\mathbf{x}), y)].$$</p>
+    <p>We can't compute the expectation &mdash; we don't know $p$ &mdash; so we replace it with an average. That gives the next slide.</p>
+</section>
+
+<section class="slide" id="slide-02">
+    <div class="slide-number">02</div>
+    <h2>Empirical Risk Minimisation</h2>
+    <p>$$\hat R_N(\boldsymbol\theta) = \frac{1}{N}\sum_{n=1}^N \ell(f_{\boldsymbol\theta}(\mathbf{x}_n), y_n),\qquad \hat{\boldsymbol\theta} = \arg\min_{\boldsymbol\theta\in\Theta} \hat R_N(\boldsymbol\theta).$$</p>
+    <p>Why it works: by the law of large numbers, $\hat R_N(\boldsymbol\theta) \to R(\boldsymbol\theta)$ pointwise as $N\to\infty$. With a bit more machinery (uniform convergence over $\Theta$), $\hat{\boldsymbol\theta}\to\boldsymbol\theta^\star$.</p>
+
+    <h3>Three canonical losses</h3>
+    <table>
+        <thead><tr><th>Problem</th><th>Loss</th><th>Predictor at min</th></tr></thead>
+        <tbody>
+            <tr><td>Regression</td><td>squared $\ell(\hat y, y) = (\hat y - y)^2$</td><td>$\mathbb{E}[y\mid \mathbf{x}]$ (conditional mean)</td></tr>
+            <tr><td>Robust regression</td><td>absolute $\ell = |\hat y - y|$</td><td>conditional median</td></tr>
+            <tr><td>Classification</td><td>0-1 (intractable) / cross-entropy (proxy)</td><td>argmax of class posterior</td></tr>
+        </tbody>
+    </table>
+
+    <div class="callout">
+        <div class="callout-label">When ERM fails</div>
+        <p>If the hypothesis class is too rich, $\hat R_N$ can be made arbitrarily small (e.g. memorising the training set) while the true $R$ stays large. The bias-variance picture on the next slide and the regularisation picture two slides later are both responses to this failure.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-03">
+    <div class="slide-number">03</div>
+    <h2>The Bias-Variance Decomposition</h2>
+    <p>For squared loss, the expected test error at $\mathbf{x}$ decomposes into three additive pieces:</p>
+    <p>$$\underbrace{\mathbb{E}\bigl[(y - f_D(\mathbf{x}))^2\bigr]}_{\text{expected error}} = \underbrace{\bigl(\mathbb{E}[f_D(\mathbf{x})] - f^\star(\mathbf{x})\bigr)^2}_{\text{bias}^2} + \underbrace{\mathbb{V}[f_D(\mathbf{x})]}_{\text{variance}} + \underbrace{\sigma^2}_{\text{noise}}.$$</p>
+    <p>$D$ is the random training set; $f_D$ is the predictor we'd fit to it; $f^\star = \mathbb{E}[y\mid\mathbf{x}]$ is the Bayes optimum.</p>
+
+    <h3>Reading the decomposition</h3>
+    <ul>
+        <li><strong>Bias</strong> is how far our average predictor is from the truth &mdash; high when the model class is too rigid (underfitting).</li>
+        <li><strong>Variance</strong> is how much $f_D$ wobbles when we redraw the data &mdash; high when the class is too flexible (overfitting).</li>
+        <li><strong>Noise</strong> is irreducible.</li>
+    </ul>
+    <p>Adding capacity drops bias and increases variance. The total error has a U shape. Regularisation, cross-validation and ensembling are all attempts to land at the bottom of that U.</p>
+</section>
+
+<section class="slide" id="slide-04">
+    <div class="slide-number">04</div>
+    <h2>Interactive: Polynomial Fitting</h2>
+    <p>Click on the canvas to add data points; slide the polynomial degree and the ridge $\lambda$. The fit, training error and (independently sampled) test error update live.</p>
+
+    <div class="canvas-wrap">
+        <canvas id="poly-canvas" width="700" height="380"></canvas>
+    </div>
+
+    <div class="control-panel">
+        <div class="control-row">
+            <label for="poly-deg">degree</label>
+            <input type="range" id="poly-deg" min="1" max="15" step="1" value="3">
+            <div class="val" id="poly-deg-r">3</div>
+        </div>
+        <div class="control-row">
+            <label for="poly-reg">ridge λ (log)</label>
+            <input type="range" id="poly-reg" min="-8" max="2" step="0.25" value="-6">
+            <div class="val" id="poly-reg-r">1e-6</div>
+        </div>
+        <div class="control-row">
+            <button class="btn" id="poly-resample">Resample data</button>
+            <button class="btn secondary" id="poly-clear">Clear extras</button>
+        </div>
+        <div class="metric-grid">
+            <div class="metric"><div class="metric-label">N (training)</div><div class="metric-value" id="poly-n">—</div></div>
+            <div class="metric"><div class="metric-label">train MSE</div><div class="metric-value" id="poly-train">—</div></div>
+            <div class="metric"><div class="metric-label">test MSE</div><div class="metric-value" id="poly-test">—</div></div>
+        </div>
+    </div>
+
+    <p>The "truth" curve is $y = \sin(\pi x) + \tfrac12 x$ plus Gaussian noise. Push degree past 8 with no regularisation and you'll see test MSE blow up while train MSE keeps falling &mdash; the textbook overfit. Add a tiny ridge and the high-degree fit calms down.</p>
+</section>
+
+<section class="slide" id="slide-05">
+    <div class="slide-number">05</div>
+    <h2>Regularisation as a Prior</h2>
+    <p>Add a penalty $\Omega(\boldsymbol\theta)$ to ERM:</p>
+    <p>$$\hat{\boldsymbol\theta} = \arg\min_{\boldsymbol\theta}\;\hat R_N(\boldsymbol\theta) + \lambda\,\Omega(\boldsymbol\theta).$$</p>
+    <table>
+        <thead><tr><th>Penalty</th><th>Effect</th><th>Equivalent prior</th></tr></thead>
+        <tbody>
+            <tr><td>$\|\boldsymbol\theta\|_2^2$ &mdash; <strong>ridge / L2</strong></td><td>shrinks toward 0; closed-form</td><td>Gaussian prior $\mathcal N(\mathbf 0, \lambda^{-1}I)$</td></tr>
+            <tr><td>$\|\boldsymbol\theta\|_1$ &mdash; <strong>lasso / L1</strong></td><td>encourages sparsity</td><td>Laplace prior</td></tr>
+            <tr><td>$\|D\boldsymbol\theta\|_2^2$ &mdash; <strong>smoothness</strong></td><td>penalises differences</td><td>GP prior (in function space)</td></tr>
+        </tbody>
+    </table>
+
+    <p>Reading the penalty as a log-prior:</p>
+    <p>$$\arg\min \;\hat R_N + \lambda\Omega \;=\; \arg\max\;\sum_n \log p(y_n\mid f_{\boldsymbol\theta}(\mathbf{x}_n)) + \log p(\boldsymbol\theta).$$</p>
+    <p>So <strong>regularised ERM = MAP estimation</strong> with the appropriate prior. The Bayesian framework gives the same answer at the mode, and an uncertainty estimate too.</p>
+</section>
+
+<section class="slide" id="slide-06">
+    <div class="slide-number">06</div>
+    <h2>Cross-Validation</h2>
+    <div class="diagram-grid cols-3">
+        <div class="diagram-panel accent-border">
+            <h4>Hold-out</h4>
+            <p>Split once into train/validation. Fast, noisy with small $N$.</p>
+        </div>
+        <div class="diagram-panel y">
+            <h4>$k$-fold</h4>
+            <p>Split into $k$ folds; train on $k-1$ and test on the held-out fold; average. Standard for moderate $N$. $k=5$ or $10$ are the typical choices.</p>
+        </div>
+        <div class="diagram-panel g">
+            <h4>Leave-one-out</h4>
+            <p>$k=N$. Almost unbiased; high variance; expensive. Cheap for linear models thanks to a closed-form (the <em>hat matrix</em> trick).</p>
+        </div>
+    </div>
+
+    <p>Cross-validation estimates the test error of a <em>hyperparameter setting</em>. For unbiased estimates of final test error, hold out a separate, untouched test set.</p>
+
+    <div class="callout">
+        <div class="callout-label">Common foot-gun</div>
+        <p>If you cross-validate over many hyperparameters, the best CV score is itself an overfit estimate. The "nested" CV ($k$-fold inside $k$-fold) is the safe pattern.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-07">
+    <div class="slide-number">07</div>
+    <h2>MLE vs MAP</h2>
+    <h3>Maximum likelihood</h3>
+    <p>$$\hat{\boldsymbol\theta}_{\text{ML}} = \arg\max_{\boldsymbol\theta} \log p(\mathcal D\mid \boldsymbol\theta) = \arg\max \sum_n \log p(y_n\mid \mathbf{x}_n, \boldsymbol\theta).$$</p>
+    <p>For Gaussian noise it reduces to least squares. Consistent under model correctness; can overfit when $N$ is small.</p>
+
+    <h3>Maximum a posteriori</h3>
+    <p>$$\hat{\boldsymbol\theta}_{\text{MAP}} = \arg\max_{\boldsymbol\theta} \log p(\boldsymbol\theta\mid\mathcal D) = \arg\max \bigl[\log p(\mathcal D\mid\boldsymbol\theta) + \log p(\boldsymbol\theta)\bigr].$$</p>
+    <p>Adds a prior; equivalent to regularised MLE. Still a point estimate &mdash; doesn't capture uncertainty.</p>
+
+    <h3>Fully Bayesian</h3>
+    <p>Compute (or approximate) the full posterior $p(\boldsymbol\theta\mid\mathcal D)$. Decks 09 and 11 do this in closed form for the Gaussian / mixture cases.</p>
+</section>
+
+<section class="slide" id="slide-08">
+    <div class="slide-number">08</div>
+    <h2>Probabilistic Modelling: Generative vs Discriminative</h2>
+    <div class="diagram-grid cols-2">
+        <div class="diagram-panel accent-border">
+            <h4>Discriminative</h4>
+            <p>Model $p(y\mid\mathbf{x},\boldsymbol\theta)$ directly. Cheaper and usually more accurate when you only care about predicting $y$.</p>
+            <p>Examples: linear / logistic regression, SVM, neural classifier.</p>
+        </div>
+        <div class="diagram-panel g">
+            <h4>Generative</h4>
+            <p>Model the joint $p(\mathbf{x}, y\mid\boldsymbol\theta) = p(\mathbf{x}\mid y,\boldsymbol\theta)\,p(y\mid\boldsymbol\theta)$. Generates new data; gives a natural way to handle missing inputs.</p>
+            <p>Examples: na&iuml;ve Bayes, LDA / QDA, GMM, generative models (VAEs, diffusion).</p>
+        </div>
+    </div>
+
+    <p>The book reminds us that the choice isn't binary: many discriminative models (logistic regression) are best-derived <em>from</em> generative ones (LDA), and conversely many generative models train discriminatively today.</p>
+</section>
+
+<section class="slide" id="slide-09">
+    <div class="slide-number">09</div>
+    <h2>Directed Graphical Models</h2>
+    <p>A <strong>directed graphical model</strong> (Bayesian network) is a DAG whose nodes are random variables and whose edges encode conditional dependence. The joint factorises:</p>
+    <p>$$p(\mathbf{x}_1,\dots,\mathbf{x}_n) = \prod_{i=1}^n p(\mathbf{x}_i \mid \mathrm{Pa}(\mathbf{x}_i)).$$</p>
+    <p>Two readings:</p>
+    <ul>
+        <li><strong>Modelling</strong>: writing down the DAG is writing down independence assumptions.</li>
+        <li><strong>Inference</strong>: efficient algorithms (variable elimination, belief propagation, message passing) exploit the factorisation.</li>
+    </ul>
+
+    <h3>Examples used in this book</h3>
+    <ul>
+        <li>Linear regression: $\boldsymbol\theta \to y_n \leftarrow \mathbf{x}_n$, plus shared $\sigma^2$.</li>
+        <li>GMM: $\pi \to z_n \to \mathbf{x}_n \leftarrow \boldsymbol\mu_k, \Sigma_k$.</li>
+        <li>Probabilistic PCA: $\mathbf{z}_n \to \mathbf{x}_n \leftarrow W, \boldsymbol\mu, \sigma^2$.</li>
+    </ul>
+</section>
+
+<section class="slide" id="slide-10">
+    <div class="slide-number">10</div>
+    <h2>Model Selection</h2>
+    <p>Once you have a family parameterised by a hyperparameter (regularisation strength, number of components, polynomial degree&hellip;), you have to pick one. Three strategies:</p>
+
+    <table>
+        <thead><tr><th>Strategy</th><th>Idea</th><th>Strengths</th></tr></thead>
+        <tbody>
+            <tr><td>Cross-validation</td><td>Estimate test error by held-out data; pick min</td><td>Model-agnostic; just an extra fit</td></tr>
+            <tr><td>Information criteria (AIC, BIC)</td><td>Penalise log-likelihood by parameter count</td><td>No extra fits; needs likelihood</td></tr>
+            <tr><td>Marginal likelihood / "evidence"</td><td>$p(\mathcal D) = \int p(\mathcal D\mid\boldsymbol\theta)p(\boldsymbol\theta)d\boldsymbol\theta$</td><td>Fully Bayesian; automatic Occam's razor</td></tr>
+        </tbody>
+    </table>
+
+    <p>The evidence integral is the same $p(\mathcal D)$ that we discarded as a normaliser in Bayes' rule. When you can compute it (Gaussian linear regression in deck 09), it picks the model size that balances data fit and prior plausibility &mdash; without needing held-out data.</p>
+</section>
+
+<section class="slide" id="slide-11">
+    <div class="slide-number">11</div>
+    <h2>Where This Lands in Part II</h2>
+    <table>
+        <thead><tr><th>Concept</th><th>Used by</th><th>Where</th></tr></thead>
+        <tbody>
+            <tr><td>ERM with MSE</td><td>Linear regression (ch. 9)</td><td>Becomes the normal equation</td></tr>
+            <tr><td>Ridge = MAP</td><td>Linear regression, kernel methods</td><td>Penalty $\lambda \|\boldsymbol\theta\|^2$</td></tr>
+            <tr><td>Generative likelihood</td><td>GMM (ch. 11)</td><td>EM maximises the data likelihood</td></tr>
+            <tr><td>Bias-variance &amp; CV</td><td>All</td><td>Choosing model size / kernel / $\lambda$</td></tr>
+            <tr><td>Posterior</td><td>Bayesian linear regression (ch. 9)</td><td>Closed-form Gaussian posterior</td></tr>
+            <tr><td>Graphical model</td><td>GMM, PCA</td><td>Latent variables, plate notation</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section class="slide" id="slide-12">
+    <div class="slide-number">12</div>
+    <h2>Cheat Sheet</h2>
+    <table>
+        <thead><tr><th>Quantity</th><th>Formula</th></tr></thead>
+        <tbody>
+            <tr><td>Empirical risk</td><td>$\hat R_N(\boldsymbol\theta) = \tfrac1N\sum_n \ell(f_{\boldsymbol\theta}(\mathbf x_n), y_n)$</td></tr>
+            <tr><td>Squared loss min</td><td>at $f^\star(\mathbf x) = \mathbb E[y\mid\mathbf x]$</td></tr>
+            <tr><td>Bias-variance</td><td>err $=$ bias$^2 +$ variance $+$ noise</td></tr>
+            <tr><td>MLE</td><td>$\arg\max \sum\log p(y_n\mid\mathbf x_n,\boldsymbol\theta)$</td></tr>
+            <tr><td>MAP</td><td>$\arg\max [\log p(\mathcal D\mid\boldsymbol\theta) + \log p(\boldsymbol\theta)]$</td></tr>
+            <tr><td>Ridge = Gaussian prior</td><td>$\lambda\|\boldsymbol\theta\|^2 \leftrightarrow \mathcal N(\mathbf 0, \lambda^{-1}I)$</td></tr>
+            <tr><td>Lasso = Laplace prior</td><td>$\lambda\|\boldsymbol\theta\|_1$</td></tr>
+            <tr><td>DAG factorisation</td><td>$p(\mathbf x) = \prod_i p(\mathbf x_i\mid \mathrm{Pa}(\mathbf x_i))$</td></tr>
+            <tr><td>Evidence</td><td>$p(\mathcal D) = \int p(\mathcal D\mid\boldsymbol\theta)p(\boldsymbol\theta)d\boldsymbol\theta$</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<footer class="footer">
+    <p><strong>Book:</strong> Deisenroth, Faisal &amp; Ong, <em>Mathematics for Machine Learning</em> &mdash; Cambridge University Press, 2020, chapter 8.<br>Free PDF: <a href="https://mml-book.github.io/book/mml-book.pdf">mml-book.github.io/book/mml-book.pdf</a></p>
+    <p style="margin-top:.6rem"><a href="https://brendanjameslynskey.github.io/MML_Hub/">&larr; All decks</a> &middot; <a href="https://brendanjameslynskey.github.io/MML_07_Continuous_Optimisation/">prev (07)</a> &middot; <a href="https://brendanjameslynskey.github.io/MML_09_Linear_Regression/">next (09) &rarr;</a></p>
+</footer>
+
+<script>
+// Polynomial fitting with ridge
+(function() {
+    const cvs = document.getElementById('poly-canvas');
+    if (!cvs) return;
+    const ctx = cvs.getContext('2d');
+    const W = 700, H = 380;
+    cvs.width = W; cvs.height = H;
+
+    const xMin=0, xMax=1, yMin=-1.6, yMax=1.6;
+    function toS(x,y){ return [(x-xMin)/(xMax-xMin)*W, H-(y-yMin)/(yMax-yMin)*H]; }
+    function fromS(sx,sy){ return [(sx/W)*(xMax-xMin)+xMin, yMin+(1-sy/H)*(yMax-yMin)]; }
+
+    function truth(x){ return Math.sin(Math.PI*x) + 0.5*x; }
+
+    // simple seeded RNG for reproducibility-ish
+    let seed = 42;
+    function rng(){ seed = (seed*1103515245 + 12345) & 0x7fffffff; return seed/0x7fffffff; }
+    function gauss(){ const u=Math.max(1e-9,rng()), v=Math.max(1e-9,rng()); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+
+    function sampleData(N) {
+        const pts = [];
+        for (let i=0;i<N;i++) {
+            const x = rng();
+            const y = truth(x) + 0.18*gauss();
+            pts.push({x, y});
+        }
+        return pts;
+    }
+
+    function sampleTest(N) {
+        // separate stream
+        const orig = seed; seed = 7777;
+        const out = [];
+        for (let i=0;i<N;i++) { const x = rng(); const y = truth(x) + 0.18*gauss(); out.push({x,y}); }
+        seed = orig;
+        return out;
+    }
+
+    let data = sampleData(15);
+    const test = sampleTest(200);
+
+    let degree = 3;
+    let logLambda = -6;
+
+    // simple normal equations: theta = (Phi^T Phi + lambda I)^-1 Phi^T y
+    function solve(deg, lam) {
+        const p = deg + 1;
+        const Phi = data.map(d => {
+            const row = new Array(p);
+            for (let j=0;j<p;j++) row[j] = Math.pow(d.x, j);
+            return row;
+        });
+        const ys = data.map(d => d.y);
+        // A = Phi^T Phi + lam I
+        const A = []; for (let i=0;i<p;i++) { A.push(new Array(p).fill(0)); }
+        for (let i=0;i<p;i++) for (let j=0;j<p;j++) for (let n=0;n<data.length;n++) A[i][j] += Phi[n][i]*Phi[n][j];
+        for (let i=0;i<p;i++) A[i][i] += lam;
+        // b = Phi^T y
+        const b = new Array(p).fill(0);
+        for (let i=0;i<p;i++) for (let n=0;n<data.length;n++) b[i] += Phi[n][i]*ys[n];
+        // solve A theta = b by Gauss elimination
+        const M = A.map((r,i) => r.concat([b[i]]));
+        for (let i=0;i<p;i++) {
+            // pivot
+            let piv = i;
+            for (let k=i+1;k<p;k++) if (Math.abs(M[k][i]) > Math.abs(M[piv][i])) piv = k;
+            if (piv !== i) [M[i], M[piv]] = [M[piv], M[i]];
+            const d = M[i][i] || 1e-12;
+            for (let k=i+1;k<p;k++) {
+                const factor = M[k][i] / d;
+                for (let j=i;j<=p;j++) M[k][j] -= factor*M[i][j];
+            }
+        }
+        const theta = new Array(p).fill(0);
+        for (let i=p-1;i>=0;i--) {
+            let s = M[i][p];
+            for (let j=i+1;j<p;j++) s -= M[i][j]*theta[j];
+            theta[i] = s / (M[i][i] || 1e-12);
+        }
+        return theta;
+    }
+    function evalPoly(theta, x) {
+        let s = 0;
+        for (let j=0;j<theta.length;j++) s += theta[j]*Math.pow(x, j);
+        return s;
+    }
+
+    function draw() {
+        ctx.fillStyle = '#0d1117'; ctx.fillRect(0,0,W,H);
+        // axes
+        ctx.strokeStyle = '#21262d';
+        const oy = toS(0,0)[1];
+        ctx.beginPath(); ctx.moveTo(0, oy); ctx.lineTo(W, oy); ctx.stroke();
+        // truth
+        ctx.strokeStyle = 'rgba(139,148,158,0.6)'; ctx.lineWidth = 1.5; ctx.setLineDash([5,5]);
+        ctx.beginPath();
+        for (let i=0;i<=200;i++) {
+            const x = xMin + (i/200)*(xMax-xMin);
+            const [sx, sy] = toS(x, truth(x));
+            if (i===0) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy);
+        }
+        ctx.stroke(); ctx.setLineDash([]);
+        // fit
+        const lam = Math.pow(10, logLambda);
+        const theta = solve(degree, lam);
+        ctx.strokeStyle = '#a78bfa'; ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        for (let i=0;i<=200;i++) {
+            const x = xMin + (i/200)*(xMax-xMin);
+            const [sx, sy] = toS(x, evalPoly(theta, x));
+            if (i===0) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy);
+        }
+        ctx.stroke();
+        // data points
+        ctx.fillStyle = '#fbbf24';
+        for (const d of data) {
+            const [sx, sy] = toS(d.x, d.y);
+            ctx.beginPath(); ctx.arc(sx, sy, 4, 0, 2*Math.PI); ctx.fill();
+        }
+        // legend
+        ctx.fillStyle = '#8b949e'; ctx.font = '12px JetBrains Mono, monospace';
+        ctx.fillText('truth (sin πx + ½x)', 14, 22);
+        ctx.fillStyle = '#a78bfa'; ctx.fillText('fit', 14, 40);
+        ctx.fillStyle = '#fbbf24'; ctx.fillText('train data (click to add)', 14, 58);
+
+        // metrics
+        let trainMSE = 0;
+        for (const d of data) { const e = d.y - evalPoly(theta, d.x); trainMSE += e*e; }
+        trainMSE /= Math.max(1, data.length);
+        let testMSE = 0;
+        for (const d of test) { const e = d.y - evalPoly(theta, d.x); testMSE += e*e; }
+        testMSE /= test.length;
+        document.getElementById('poly-n').textContent = data.length;
+        document.getElementById('poly-train').textContent = trainMSE.toFixed(3);
+        document.getElementById('poly-test').textContent = testMSE.toFixed(3);
+    }
+
+    document.getElementById('poly-deg').addEventListener('input', e => {
+        degree = parseInt(e.target.value, 10);
+        document.getElementById('poly-deg-r').textContent = degree;
+        draw();
+    });
+    document.getElementById('poly-reg').addEventListener('input', e => {
+        logLambda = parseFloat(e.target.value);
+        document.getElementById('poly-reg-r').textContent = (Math.pow(10, logLambda).toExponential(1));
+        draw();
+    });
+    document.getElementById('poly-resample').addEventListener('click', () => { seed = (Date.now() & 0x7fffffff); data = sampleData(15); draw(); });
+    document.getElementById('poly-clear').addEventListener('click', () => { data = sampleData(15); draw(); });
+    cvs.addEventListener('click', e => {
+        const r = cvs.getBoundingClientRect();
+        const sx = (e.clientX-r.left)*(W/r.width), sy = (e.clientY-r.top)*(H/r.height);
+        const [wx, wy] = fromS(sx, sy);
+        if (wx > xMin && wx < xMax) data.push({x: wx, y: wy});
+        draw();
+    });
+    draw();
+})();
+</script>
+
+</body>
+</html>
